@@ -1,0 +1,27 @@
+UVM_INFO testbench/tests/rx_test.sv(47) @ 5856300: uvm_test_top [TEST] INST Coverage = 100.00 % --> Covered = 44, Total = 44
+UVM_INFO testbench/tests/rx_test.sv(48) @ 5856300: uvm_test_top [TEST] LEN_CP Coverage Coverage = 100.00 %
+UVM_INFO testbench/tests/rx_test.sv(50) @ 5856300: uvm_test_top [TEST] LVD_CP Coverage Coverage = 100.00 %
+UVM_INFO testbench/tests/rx_test.sv(53) @ 5856300: uvm_test_top [TEST] LENXLD Coverage Coverage = 100.00 %
+UVM_ERROR testbench/tb_env/rx_scoreboard.sv(99) @ 5856300: uvm_test_top.m_rx_env.m_rx_sb [SCR] Index Mismatch input[29268] output[7317]
+UVM_INFO testbench/tests/rx_test.sv(59) @ 5856300: uvm_test_top [TEST]
+
+============================================================
+uvm_test_top.m_rx_env.m_rx_sb Scoreboard Report
+============================================================
+
+------------------------------------------------------------
+Transaction Summary
+Total      : 7317
+Match      : 7317 (100.00%)
+MisMatch   : 0
+------------------------------------------------------------
+
+UVM_INFO /global/apps/vcs/2023.03-SP1/etc/uvm-1.2/base/uvm_report_catcher.svh(705) @ 5856300: reporter [UVM/REPORT/CATCHER]
+--- UVM Report catcher Summary ---
+
+Number of demoted UVM_FATAL reports   : 0
+Number of demoted UVM_ERROR reports   : 0
+Number of demoted UVM_WARNING reports : 0
+Number of caught UVM_FATAL reports    : 0
+Number of caught UVM_ERROR reports    : 0
+Number of caught UVM_WARNING reports  : 0
