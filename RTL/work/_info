@@ -1,0 +1,126 @@
+m255
+K4
+z2
+13
+!s112 1.1
+!i10d 8192
+!i10e 25
+!i10f 100
+cModel Technology
+Z0 dC:/modeltech64_10.6e/examples
+T_opt
+!s110 1770616776
+VhNT:nz6HWZc2gl;6nhi^D3
+04 2 4 work tb fast 0
+=1-d4939030f4c1-698977c7-347-4e68
+Z1 o-quiet -auto_acc_if_foreign -work work
+Z2 tCvgOpt 0
+n@_opt
+Z3 OL;O;10.6e;65
+R0
+T_opt1
+!s110 1770616641
+V]@f4=[UM^EH@5aLEm=l:E2
+04 3 4 work top fast 0
+=1-d4939030f4c1-69897741-27e-8d8
+R1
+R2
+n@_opt1
+R3
+R0
+vrcv
+Z4 DXx6 sv_std 3 std 0 22 AD7iAPLo6nTIKk<N0eo=D3
+Z5 VDg1SIo80bB@j0V0VzS_@n1
+r1
+!s85 0
+31
+!i10b 1
+!s100 gjg2ZEBL2IV3X<<4ZlekQ0
+I>gh^a1]UBHLD0LmH=>XX`3
+!s105 rcv_sv_unit
+S1
+Z6 dC:/Modelsim_projects/sv
+w1770593702
+8rcv.sv
+Frcv.sv
+L0 1
+Z7 OL;L;10.6e;65
+Z8 !s108 1770627269.000000
+Z9 !s107 top.sv|sender.sv|rcv.sv|handshake_tb.sv|
+Z10 !s90 -reportprogress|300|-sv|-cover|sbt|handshake_tb.sv|rcv.sv|sender.sv|top.sv|
+!i113 0
+Z11 !s102 -cover sbt
+Z12 o-sv -cover sbt -L mtiAvm -L mtiRnm -L mtiOvm -L mtiUvm -L mtiUPF -L infact
+R2
+vsender
+R4
+R5
+r1
+!s85 0
+31
+!i10b 1
+!s100 Z[am03BJm<0^1Q9RH0R2<2
+ILJfjgU^VBkMbA4S<ogW]N3
+!s105 sender_sv_unit
+S1
+R6
+w1770593627
+8sender.sv
+Fsender.sv
+L0 1
+R7
+R8
+R9
+R10
+!i113 0
+R11
+R12
+R2
+vtb
+R4
+R5
+r1
+!s85 0
+31
+!i10b 1
+!s100 _GWgR2PYW8OS8:<f4APYc1
+IA`P<fgLa2Scc_ADLS1N950
+!s105 handshake_tb_sv_unit
+S1
+R6
+w1770616756
+8handshake_tb.sv
+Fhandshake_tb.sv
+L0 3
+R7
+R8
+R9
+R10
+!i113 0
+R11
+R12
+R2
+vtop
+R4
+R5
+r1
+!s85 0
+31
+!i10b 1
+!s100 Y<kEMo?B93Gfl[Ac9aU541
+I6iznJTenRDjaNa39BV9:T0
+!s105 top_sv_unit
+S1
+R6
+w1770595136
+8top.sv
+Ftop.sv
+L0 1
+R7
+R8
+R9
+R10
+!i113 0
+R11
+R12
+R2
