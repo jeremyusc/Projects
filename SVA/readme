@@ -1,0 +1,5 @@
+1. all the states are one hot encoded
+2. if rst asserted, system stays in idle state
+3. if rst deassery, system transist to correct state based on din
+4. all states are covered at least once
+5. if rst deasserted, output must get expected value
