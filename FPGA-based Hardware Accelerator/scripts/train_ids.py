@@ -156,25 +156,51 @@ def select_features(X_train, y_train, col_names, n_features=11):
     return selected_indices, selected_names
 
 
-def normalize_features(X_train, X_test, selected_indices):
-    """Min-max normalize selected features to [0, 1] range."""
-    X_tr = X_train[:, selected_indices].copy()
-    X_te = X_test[:, selected_indices].copy()
+# Long-tail features that benefit from log1p preprocessing.
+# These features have unbounded range (can reach 10^9 in NSL-KDD)
+# and their min-max normalization compresses 99% of samples into
+# [0, 10^-5], causing BF16 precision loss.
+LONG_TAIL_FEATURES = {'src_bytes', 'dst_bytes'}
+
+
+def normalize_features(X_train, X_test, selected_indices, selected_names):
+    """Hybrid normalization:
+       - Long-tail features (src_bytes, dst_bytes): log1p + min-max
+       - Other features: min-max only
+       All outputs are in [0, 1] range, suitable for BF16 inference.
+    """
+    X_tr = X_train[:, selected_indices].copy().astype(np.float32)
+    X_te = X_test[:, selected_indices].copy().astype(np.float32)
+
+    
+    log_mask = np.array([name in LONG_TAIL_FEATURES for name in selected_names])
+    if log_mask.any():
+        applied = [n for n, m in zip(selected_names, log_mask) if m]
+        print(f"  Applying log1p to long-tail features: {applied}")
+        for i, is_log in enumerate(log_mask):
+            if is_log:
+                # log1p(x) = log(1+x); use maximum to guard against negatives
+                X_tr[:, i] = np.log1p(np.maximum(X_tr[:, i], 0.0))
+                X_te[:, i] = np.log1p(np.maximum(X_te[:, i], 0.0))
 
     mins = X_tr.min(axis=0)
     maxs = X_tr.max(axis=0)
     ranges = maxs - mins
-    ranges[ranges == 0] = 1.0  # Avoid division by zero
+    ranges[ranges == 0] = 1.0
 
     X_tr = (X_tr - mins) / ranges
     X_te = (X_te - mins) / ranges
 
-    # Clip test set to [0, 1] (may have out-of-range values)
+    # Clip test set to [0, 1]
     X_te = np.clip(X_te, 0.0, 1.0)
 
-    norm_params = {'mins': mins.tolist(), 'maxs': maxs.tolist()}
+    norm_params = {
+        'mins': mins.tolist(),
+        'maxs': maxs.tolist(),
+        'log_mask': log_mask.tolist(),
+        'long_tail_features': sorted(LONG_TAIL_FEATURES),
+    }
     return X_tr, X_te, norm_params
-
 
 # =====================================================================
 # MLP training (manual numpy implementation, no PyTorch dependency)
@@ -474,7 +500,7 @@ def main():
     # ----------------------------------------------------------------
     print("\nNormalizing features (min-max to [0,1])...")
     X_train, X_test, norm_params = normalize_features(
-        X_train_full, X_test_full, selected_idx)
+        X_train_full, X_test_full, selected_idx, selected_names)
     print(f"  Train shape: {X_train.shape}")
     print(f"  Test shape:  {X_test.shape}")
 
