@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""
+"""EF
 compare_ids_perf.py -- Compile and run the scalar and BCAST IDS inference
 testbenches, parse GPU cycle counts, and print a side-by-side performance
 comparison table.
