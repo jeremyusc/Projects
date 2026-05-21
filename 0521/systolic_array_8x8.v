@@ -49,7 +49,7 @@ module systolic_array_8x8 (
             for (j = 0; j < 8; j = j + 1) begin : PE_COL
                 
                 // Determine input from left (boundary or adjacent PE)
-                wire [7:0] left_input;
+                reg [7:0] left_input;
                 if (j == 0) begin
                     assign left_input = data_in_left[i];
                 end else begin
