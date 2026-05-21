@@ -58,7 +58,7 @@ module dma_with_sram (
                 end
                 
                 READ: begin
-                    if (precision_mode == 1'b0) begin  // INT8
+                    if (precision_mode == 2'b0) begin  // INT8
                         if (word_counter < 18)
                             word_counter <= word_counter + 1;
                         if (word_counter == 17)
