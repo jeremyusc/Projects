@@ -70,7 +70,7 @@ module systolic_accelerator_with_sram_v2 (
         // Port A: DMA
         .addr_a(sram_addr),
         .write_en_a(sram_write_en),
-        .read_en_a(1'b0),
+        .read_en_a(sram_read_en),  // FIX: was 1'b0; needed for TRANSFER state
         .data_in_a(sram_data_in),
         .data_out_a(sram_data_out),
 
