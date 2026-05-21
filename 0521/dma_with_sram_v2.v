@@ -1,9 +1,15 @@
 /*
  * DMA Controller - Integrated with Unified SRAM
- * Transfers data from external memory to internal SRAM partitions
+ * IMPROVED: Now properly coordinates precision mode with SRAM
+ * 
+ * Data flow:
+ * 1. DMA asserts dma_write_start → SRAM updates precision_mode_sram
+ * 2. DMA transfers data based on precision_mode
+ * 3. DMA asserts dma_write_complete → SRAM marks data_valid
+ * 4. PE Array can now safely read with matching precision
  */
 
-module dma_with_sram (
+module dma_with_sram_v2 (
     input  clk,
     input  rstn,
     
@@ -23,6 +29,10 @@ module dma_with_sram (
     output reg sram_read_en,
     input  [31:0] sram_data_out,
     output reg [31:0] sram_data_in,
+    
+    // ===== PRECISION MODE SIGNALS (NEW) =====
+    output reg dma_write_start,      // Signal to SRAM: starting new precision
+    output reg dma_write_complete,   // Signal to SRAM: data transfer done
     
     // Status signals
     output reg data_ready,
@@ -47,8 +57,14 @@ module dma_with_sram (
             word_counter <= 8'h0;
             data_ready <= 1'b0;
             transfer_done <= 1'b0;
+            dma_write_start <= 1'b0;
+            dma_write_complete <= 1'b0;
         end else begin
             state <= next_state;
+            
+            // Clear one-cycle pulses
+            dma_write_start <= 1'b0;
+            dma_write_complete <= 1'b0;
             
             case (state)
                 IDLE: begin
@@ -58,16 +74,20 @@ module dma_with_sram (
                 end
                 
                 READ: begin
-                    if (precision_mode == 2'b0) begin  // INT8
+                    if (precision_mode == 2'b00) begin  // INT8
                         if (word_counter < 18)
                             word_counter <= word_counter + 1;
-                        if (word_counter == 17)
+                        if (word_counter == 17) begin
                             data_ready <= 1'b1;
+                            dma_write_complete <= 1'b1;  // Signal SRAM: INT8 data ready
+                        end
                     end else begin  // INT4
                         if (word_counter < 5)
                             word_counter <= word_counter + 1;
-                        if (word_counter == 4)
+                        if (word_counter == 4) begin
                             data_ready <= 1'b1;
+                            dma_write_complete <= 1'b1;  // Signal SRAM: INT4 data ready
+                        end
                     end
                 end
                 
@@ -93,11 +113,14 @@ module dma_with_sram (
         sram_read_en = 1'b0;
         sram_addr = 16'h0;
         sram_data_in = 32'h0;
+        dma_write_start = 1'b0;  // Default to 0, set when transitioning to READ
         
         case (state)
             IDLE: begin
-                if (compute_start)
+                if (compute_start) begin
                     next_state = READ;
+                    dma_write_start = 1'b1;  // Signal SRAM about new precision mode
+                end
             end
             
             READ: begin
@@ -105,7 +128,7 @@ module dma_with_sram (
                 ext_read_en = 1'b1;
                 sram_write_en = 1'b1;
                 
-                if (precision_mode == 1'b0) begin  // INT8
+                if (precision_mode == 2'b00) begin  // INT8
                     // Read from ext memory 0x00-0x11
                     ext_addr = word_counter;
                     // Write to SRAM: Input(0x00-0x01) + Weight(0x02-0x11)
