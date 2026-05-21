@@ -41,7 +41,7 @@ module tb_systolic_dma;
     end
     
     // DUT instantiation
-    systolic_accelerator_simple dut (
+    systolic_accelerator_with_sram dut (
         .clk(clk),
         .rstn(rstn),
         .compute_start(compute_start),
