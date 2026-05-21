@@ -1,9 +1,9 @@
 /*
- * Systolic Accelerator Top-Level with Integrated SRAM
- * Complete system with unified SRAM and DMA controller
+ * Systolic Accelerator Top-Level with Precision Mode Tracking
+ * Shows how to properly coordinate precision_mode between DMA and SRAM
  */
 
-module systolic_accelerator_with_sram (
+module systolic_accelerator_with_sram_v2 (
     // Clock and Reset
     input  clk,
     input  rstn,
@@ -24,7 +24,12 @@ module systolic_accelerator_with_sram (
     output [3:0] cycles_out,
     output data_ready,
     output transfer_done,
-    output computation_done
+    output computation_done,
+    
+    // ===== PRECISION MODE OUTPUTS (NEW) =====
+    output [1:0] sram_precision_mode,
+    output sram_precision_valid,
+    output precision_mismatch_error
 );
 
     // ========== INTERNAL SIGNALS ==========
@@ -36,6 +41,12 @@ module systolic_accelerator_with_sram (
     wire [31:0] sram_data_in;
     wire input_ready, weight_ready, output_valid;
     
+    // ===== Precision mode signals (NEW) =====
+    wire dma_write_start;
+    wire dma_write_complete;
+    wire precision_valid_sram;
+    wire precision_mismatch_sram;
+    
     // PE Array signals
     wire [7:0] weight_matrix [0:7][0:7];
     wire [7:0] input_vector [0:7];
@@ -43,15 +54,15 @@ module systolic_accelerator_with_sram (
     wire [3:0] cycle_count;
     wire array_valid_out, array_busy;
     
-    // ========== UNIFIED SRAM ==========
-    unified_sram sram_inst (
+    // ========== UNIFIED SRAM WITH PRECISION TRACKING ==========
+    unified_sram_v2 sram_inst (
         .clk(clk),
         .rstn(rstn),
         
-        // Port A: DMA Interface (read/write)
+        // Port A: DMA Interface
         .addr_a(sram_addr),
         .write_en_a(sram_write_en),
-        .read_en_a(sram_read_en),
+        .read_en_a(1'b0),
         .data_in_a(sram_data_in),
         .data_out_a(sram_data_out),
         
@@ -60,14 +71,23 @@ module systolic_accelerator_with_sram (
         .read_en_b(1'b1),
         .data_out_b(),
         
+        // ===== Precision mode signals (NEW) =====
+        .precision_mode_in(precision_mode),
+        .dma_write_start(dma_write_start),
+        .dma_write_complete(dma_write_complete),
+        
+        .precision_mode_sram(sram_precision_mode),
+        .precision_valid(precision_valid_sram),
+        .precision_mismatch(precision_mismatch_sram),
+        
         // Status
         .input_ready(input_ready),
         .weight_ready(weight_ready),
         .output_valid(output_valid)
     );
     
-    // ========== DMA CONTROLLER WITH SRAM ==========
-    dma_with_sram dma_inst (
+    // ========== DMA CONTROLLER WITH PRECISION MODE COORDINATION ==========
+    dma_with_sram_v2 dma_inst (
         .clk(clk),
         .rstn(rstn),
         
@@ -87,28 +107,33 @@ module systolic_accelerator_with_sram (
         .sram_data_out(sram_data_out),
         .sram_data_in(sram_data_in),
         
+        // ===== Precision mode coordination (NEW) =====
+        .dma_write_start(dma_write_start),
+        .dma_write_complete(dma_write_complete),
+        
         // Status
         .data_ready(data_ready),
         .transfer_done(transfer_done),
         .dma_state(dma_state)
     );
     
+    // ========== PRECISION MODE VALIDATION ==========
+    // Ensure PE Array only starts when:
+    // 1. Data is ready from DMA
+    // 2. SRAM has valid data
+    // 3. No precision mismatch detected
+    
+    wire sram_valid_for_compute = data_ready && precision_valid_sram && ~precision_mismatch_sram;
+    
     // ========== SRAM TO PE ARRAY INTERFACE ==========
-    // Extract Input Vector from SRAM
-    // SRAM Layout:
-    // 0x00: [Input[3:0]]
-    // 0x01: [Input[7:4]]
-    wire [31:0] input_word_0 = sram_data_out;  // Would read from SRAM addr 0x0000
-    wire [31:0] input_word_1;                   // Would read from SRAM addr 0x0001
+    // TODO: Implement proper SRAM address generation and data extraction
+    // For now, these are placeholders
     
-    // TODO: Implement proper SRAM read for input_vector[0:7]
-    // assign input_vector[0] = input_word_0[7:0];
-    // assign input_vector[1] = input_word_0[15:8];
-    // ...etc
+    // Extract Input Vector from SRAM (0x00-0x01)
+    wire [31:0] input_word_0 = sram_data_out;  // Read addr 0x0000
+    wire [31:0] input_word_1;                   // Read addr 0x0001 (TODO)
     
-    // Extract Weight Matrix from SRAM
-    // SRAM Layout:
-    // 0x02-0x11: [Weight[8][8]]
+    // Extract Weight Matrix from SRAM (0x02-0x11 or 0x20-0x24)
     // TODO: Implement proper SRAM read for weight_matrix[8][8]
     
     // ========== SYSTEM CONTROLLER ==========
@@ -134,7 +159,7 @@ module systolic_accelerator_with_sram (
         .clk(clk),
         .rstn(rstn),
         .precision_mode(precision_mode[0]),
-        .start_compute(data_ready),
+        .start_compute(sram_valid_for_compute),  // Only start when SRAM ready
         .load_weights(weight_ready),
         .reset_all(compute_start),
         .weight_in(weight_matrix),
@@ -145,7 +170,9 @@ module systolic_accelerator_with_sram (
         .cycle_counter(cycle_count)
     );
     
-    // Connect outputs
+    // ========== OUTPUT ASSIGNMENTS ==========
     assign cycles_out = cycle_count;
+    assign sram_precision_valid = precision_valid_sram;
+    assign precision_mismatch_error = precision_mismatch_sram;
 
 endmodule
